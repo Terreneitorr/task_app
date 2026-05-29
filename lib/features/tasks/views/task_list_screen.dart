@@ -4,6 +4,7 @@ import '../viewmodels/task_viewmodel.dart';
 import '../../auth/viewmodels/auth_viewmodel.dart';
 import '../data/models/task_model.dart';
 import 'task_form_screen.dart';
+import '../../profile/views/profile_screen.dart';
 import 'task_detail_screen.dart';
 import '../../auth/views/login_screen.dart';
 
@@ -34,8 +35,17 @@ class _TaskListScreenState extends State<TaskListScreen> {
 
       // ── AppBar ─────────────────────────────────────────────
       appBar: AppBar(
+
         title: const Text('Mis Tareas'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.account_circle_rounded),
+            tooltip: 'Mi perfil',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Recargar',
