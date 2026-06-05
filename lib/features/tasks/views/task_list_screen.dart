@@ -19,9 +19,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
   @override
   void initState() {
     super.initState();
-    // Carga las tareas al iniciar la pantalla
-    Future.microtask(() =>
-        context.read<TaskViewModel>().loadTasks());
+    Future.microtask(() => context.read<TaskViewModel>().loadTasks());
   }
 
   @override
@@ -29,17 +27,18 @@ class _TaskListScreenState extends State<TaskListScreen> {
     final taskVm = context.watch<TaskViewModel>();
     final authVm = context.watch<AuthViewModel>();
     final theme  = Theme.of(context);
+    final cs     = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F0FF),
+      backgroundColor: cs.surface,
 
-      // ── AppBar ─────────────────────────────────────────────
       appBar: AppBar(
-
-        title: const Text('Mis Tareas'),
+        backgroundColor: cs.surface,
+        foregroundColor: cs.onSurface,
+        title: Text('Mis Tareas', style: TextStyle(color: cs.onSurface)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.account_circle_rounded),
+            icon: Icon(Icons.account_circle_rounded, color: cs.onSurface),
             tooltip: 'Mi perfil',
             onPressed: () => Navigator.push(
               context,
@@ -47,12 +46,12 @@ class _TaskListScreenState extends State<TaskListScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: Icon(Icons.refresh_rounded, color: cs.onSurface),
             tooltip: 'Recargar',
             onPressed: () => taskVm.loadTasks(),
           ),
           IconButton(
-            icon: const Icon(Icons.logout_rounded),
+            icon: Icon(Icons.logout_rounded, color: cs.onSurface),
             tooltip: 'Cerrar sesión',
             onPressed: () {
               authVm.logout();
@@ -65,7 +64,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
         ],
       ),
 
-      // ── FAB — nueva tarea ──────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.push(
           context,
@@ -73,12 +71,12 @@ class _TaskListScreenState extends State<TaskListScreen> {
         ),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Nueva tarea'),
-        backgroundColor: const Color(0xFF6750A4),
-        foregroundColor: Colors.white,
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
       ),
 
       body: taskVm.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: cs.primary))
           : taskVm.status == TaskStatus.error
           ? _ErrorWidget(
         message: taskVm.errorMessage,
@@ -86,7 +84,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
       )
           : CustomScrollView(
         slivers: [
-          // ── Banner de bienvenida ─────────────────
           SliverToBoxAdapter(
             child: _WelcomeBanner(
               userName: authVm.currentUser?.name ?? 'Usuario',
@@ -95,22 +92,19 @@ class _TaskListScreenState extends State<TaskListScreen> {
               pending:   taskVm.pendingTasks,
             ),
           ),
-
-          // ── Buscador ─────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: TextField(
                 onChanged: taskVm.setSearchQuery,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Buscar tarea...',
-                  prefixIcon: Icon(Icons.search_rounded),
+                  hintStyle: TextStyle(color: cs.onSurfaceVariant),
+                  prefixIcon: Icon(Icons.search_rounded, color: cs.onSurfaceVariant),
                 ),
               ),
             ),
           ),
-
-          // ── Título sección ────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -118,17 +112,13 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 'Lista de tareas (${taskVm.tasks.length})',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF6750A4),
+                  color: cs.primary,
                 ),
               ),
             ),
           ),
-
-          // ── Lista de tareas ───────────────────────
           taskVm.tasks.isEmpty
-              ? SliverToBoxAdapter(
-            child: _EmptyWidget(),
-          )
+              ? SliverToBoxAdapter(child: _EmptyWidget())
               : SliverList(
             delegate: SliverChildBuilderDelegate(
                   (context, index) {
@@ -138,46 +128,42 @@ class _TaskListScreenState extends State<TaskListScreen> {
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          TaskDetailScreen(task: task),
+                      builder: (_) => TaskDetailScreen(task: task),
                     ),
                   ),
                   onToggle: () => taskVm.toggleTask(task),
-                  onDelete: () => _confirmDelete(
-                      context, taskVm, task),
+                  onDelete: () => _confirmDelete(context, taskVm, task),
                 );
               },
               childCount: taskVm.tasks.length,
             ),
           ),
-
-          // Espacio para el FAB
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 90),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 90)),
         ],
       ),
     );
   }
 
-  /// Diálogo de confirmación antes de eliminar
-  void _confirmDelete(
-      BuildContext context, TaskViewModel vm, TaskModel task) {
+  void _confirmDelete(BuildContext context, TaskViewModel vm, TaskModel task) {
+    final cs = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
-        title: const Text('Eliminar tarea'),
-        content: Text('¿Deseas eliminar "${task.title}"?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: cs.surfaceContainerHigh,
+        title: Text('Eliminar tarea', style: TextStyle(color: cs.onSurface)),
+        content: Text('¿Deseas eliminar "${task.title}"?',
+            style: TextStyle(color: cs.onSurfaceVariant)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text('Cancelar', style: TextStyle(color: cs.primary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade400),
+              backgroundColor: cs.error,
+              foregroundColor: cs.onError,
+            ),
             onPressed: () {
               vm.deleteTask(task.id);
               Navigator.pop(context);
@@ -190,7 +176,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
   }
 }
 
-// ── Widget: Banner superior con estadísticas ───────────────
+// ── Banner superior ────────────────────────────────────────
 class _WelcomeBanner extends StatelessWidget {
   final String userName;
   final int total, completed, pending;
@@ -203,19 +189,22 @@ class _WelcomeBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF6750A4), Color(0xFF9C89C4)],
+        // 👈 antes: gradient morado hardcodeado
+        gradient: LinearGradient(
+          colors: [cs.primary, cs.primaryContainer],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6750A4).withOpacity(0.3),
+            color: cs.primary.withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -226,9 +215,9 @@ class _WelcomeBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              const CircleAvatar(
-                backgroundColor: Colors.white24,
-                child: Icon(Icons.person_rounded, color: Colors.white),
+              CircleAvatar(
+                backgroundColor: cs.onPrimary.withOpacity(0.2),
+                child: Icon(Icons.person_rounded, color: cs.onPrimary),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -236,27 +225,27 @@ class _WelcomeBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('¡Hola, $userName!',
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color: cs.onPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.bold)),
-                    const Text('Aquí están tus tareas',
+                    Text('Aquí están tus tareas',
                         style: TextStyle(
-                            color: Colors.white70, fontSize: 13)),
+                            color: cs.onPrimary.withOpacity(0.7),
+                            fontSize: 13)),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          // Estadísticas en fila
           Row(
             children: [
-              _StatChip(label: 'Total',     value: total,     icon: Icons.list_alt_rounded),
+              _StatChip(label: 'Total',      value: total,     icon: Icons.list_alt_rounded),
               const SizedBox(width: 10),
-              _StatChip(label: 'Hechas',    value: completed, icon: Icons.check_circle_rounded),
+              _StatChip(label: 'Hechas',     value: completed, icon: Icons.check_circle_rounded),
               const SizedBox(width: 10),
-              _StatChip(label: 'Pendientes',value: pending,   icon: Icons.pending_rounded),
+              _StatChip(label: 'Pendientes', value: pending,   icon: Icons.pending_rounded),
             ],
           ),
         ],
@@ -273,25 +262,26 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
+          color: cs.onPrimary.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
-            Icon(icon, color: Colors.white, size: 20),
+            Icon(icon, color: cs.onPrimary, size: 20),
             const SizedBox(height: 4),
             Text('$value',
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: cs.onPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 18)),
             Text(label,
-                style: const TextStyle(
-                    color: Colors.white70, fontSize: 11)),
+                style: TextStyle(
+                    color: cs.onPrimary.withValues(alpha: 0.7), fontSize: 11)),
           ],
         ),
       ),
@@ -299,7 +289,7 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-// ── Widget: Tarjeta de tarea ───────────────────────────────
+// ── Tarjeta de tarea ───────────────────────────────────────
 class _TaskCard extends StatelessWidget {
   final TaskModel task;
   final VoidCallback onTap;
@@ -315,10 +305,12 @@ class _TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Card(
+      color: cs.surfaceContainerLow,
       child: ListTile(
-        contentPadding:
-        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: GestureDetector(
           onTap: onToggle,
           child: AnimatedContainer(
@@ -326,16 +318,15 @@ class _TaskCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: task.completed
-                  ? const Color(0xFF6750A4)
-                  : Colors.grey.shade200,
+              // 👈 antes: Color(0xFF6750A4) / Colors.grey.shade200
+              color: task.completed ? cs.primary : cs.surfaceContainerHighest,
               shape: BoxShape.circle,
             ),
             child: Icon(
               task.completed
                   ? Icons.check_rounded
                   : Icons.radio_button_unchecked_rounded,
-              color: task.completed ? Colors.white : Colors.grey,
+              color: task.completed ? cs.onPrimary : cs.onSurfaceVariant,
               size: 22,
             ),
           ),
@@ -345,9 +336,9 @@ class _TaskCard extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            decoration:
-            task.completed ? TextDecoration.lineThrough : null,
-            color: task.completed ? Colors.grey : Colors.black87,
+            decoration: task.completed ? TextDecoration.lineThrough : null,
+            // 👈 antes: Colors.black87 / Colors.grey
+            color: task.completed ? cs.onSurfaceVariant : cs.onSurface,
           ),
         ),
         subtitle: Padding(
@@ -355,34 +346,34 @@ class _TaskCard extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
+                  // 👈 antes: Colors.green.shade50 / Colors.orange.shade50
                   color: task.completed
-                      ? Colors.green.shade50
-                      : Colors.orange.shade50,
+                      ? cs.secondaryContainer
+                      : cs.tertiaryContainer,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: task.completed
-                        ? Colors.green.shade200
-                        : Colors.orange.shade200,
+                        ? cs.secondary
+                        : cs.tertiary,
                   ),
                 ),
                 child: Text(
                   task.completed ? 'Completada' : 'Pendiente',
                   style: TextStyle(
                     fontSize: 11,
+                    // 👈 antes: Colors.green.shade700 / Colors.orange.shade700
                     color: task.completed
-                        ? Colors.green.shade700
-                        : Colors.orange.shade700,
+                        ? cs.onSecondaryContainer
+                        : cs.onTertiaryContainer,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Text('#${task.id}',
-                  style: const TextStyle(
-                      fontSize: 11, color: Colors.grey)),
+                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
             ],
           ),
         ),
@@ -390,14 +381,12 @@ class _TaskCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.info_outline_rounded,
-                  color: Color(0xFF6750A4)),
+              icon: Icon(Icons.info_outline_rounded, color: cs.primary),
               onPressed: onTap,
               tooltip: 'Ver detalle',
             ),
             IconButton(
-              icon: Icon(Icons.delete_outline_rounded,
-                  color: Colors.red.shade400),
+              icon: Icon(Icons.delete_outline_rounded, color: cs.error),
               onPressed: onDelete,
               tooltip: 'Eliminar',
             ),
@@ -408,27 +397,26 @@ class _TaskCard extends StatelessWidget {
   }
 }
 
-// ── Widget: Estado vacío ───────────────────────────────────
+// ── Estado vacío ───────────────────────────────────────────
 class _EmptyWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
         child: Column(
           children: [
-            Icon(Icons.inbox_rounded,
-                size: 80, color: Colors.grey.shade300),
+            Icon(Icons.inbox_rounded, size: 80, color: cs.outlineVariant),
             const SizedBox(height: 16),
             Text('No hay tareas',
                 style: TextStyle(
                     fontSize: 18,
-                    color: Colors.grey.shade500,
+                    color: cs.onSurfaceVariant,
                     fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text('Toca + para crear una nueva',
-                style: TextStyle(
-                    fontSize: 13, color: Colors.grey.shade400)),
+                style: TextStyle(fontSize: 13, color: cs.outline)),
           ],
         ),
       ),
@@ -436,7 +424,7 @@ class _EmptyWidget extends StatelessWidget {
   }
 }
 
-// ── Widget: Error ──────────────────────────────────────────
+// ── Error ──────────────────────────────────────────────────
 class _ErrorWidget extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
@@ -444,20 +432,24 @@ class _ErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wifi_off_rounded,
-                size: 70, color: Colors.grey.shade300),
+            Icon(Icons.wifi_off_rounded, size: 70, color: cs.outlineVariant),
             const SizedBox(height: 16),
             Text(message,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600)),
+                style: TextStyle(color: cs.onSurfaceVariant)),
             const SizedBox(height: 20),
             ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
+              ),
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Reintentar'),

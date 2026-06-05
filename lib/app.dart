@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/network/http_client.dart';
-import 'shared/theme/app_theme.dart';
+import 'core/theme/theme.dart';
 import 'shared/theme/util.dart';
 
 import 'features/auth/data/repositories/auth_repository.dart';
